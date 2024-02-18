@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:multi_select_flutter/multi_select_flutter.dart';
 
 import 'package:FinTracker/documents.dart';
 import 'package:FinTracker/favorite.dart';
@@ -81,20 +82,7 @@ class _HomeState extends State<Home> {
                   showModalBottomSheet(
                       context: context,
                       builder: (BuildContext context) {
-                        return SizedBox(
-                          height: 200,
-                          child: Center(
-                              child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            mainAxisSize: MainAxisSize.min,
-                            children: <Widget>[
-                              const Text('Graphic config bottomsheet'),
-                              ElevatedButton(
-                                  onPressed: () => Navigator.pop(context),
-                                  child: const Text('Cole config bottomsheet'))
-                            ],
-                          )),
-                        );
+                        return const ConfigGraphicModal();
                       });
                 },
                 icon: Icon(
@@ -104,11 +92,118 @@ class _HomeState extends State<Home> {
         ],
       ),
       body: buildPageView(),
-      drawer: Drawer(child: DrawerContent()),
+      drawer: const Drawer(child: DrawerContent()),
       // body: Column(children: [Progress(), TaskList()])
       bottomNavigationBar: CustomNavigationBar(
           currentPageIndex: _currentPageIndex,
           updateCurrentPageIndex: _updateCurrentPageIndexPageController),
+    );
+  }
+}
+
+class Year {
+  final int id;
+  final String year;
+  Year({required this.id, required this.year});
+}
+
+class ConfigGraphicModal extends StatefulWidget {
+  const ConfigGraphicModal({super.key});
+
+  @override
+  State<ConfigGraphicModal> createState() => _ConfigGraphicModalState();
+}
+
+class _ConfigGraphicModalState extends State<ConfigGraphicModal> {
+  bool _isGraphicModalSelected = false;
+  static List<Year> _years = [
+    Year(id: 2018, year: '2018'),
+    Year(id: 2019, year: '2019'),
+    Year(id: 2020, year: '2020'),
+    Year(id: 2021, year: '2021'),
+    Year(id: 2022, year: '2022'),
+    Year(id: 2023, year: '2023')
+  ];
+
+  final _items =
+      _years.map((year) => MultiSelectItem(year, year.year)).toList();
+  List<Year> _selectedYears = [];
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 220,
+      child: Center(
+          child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Row(
+            children: [
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20),
+                child: Text('Gráfico'),
+              ),
+              IconButton(
+                  onPressed: () => setState(() {
+                        _isGraphicModalSelected = false;
+                      }),
+                  icon: Icon(
+                    Icons.line_axis,
+                    color: !_isGraphicModalSelected
+                        ? Colors.red[300]
+                        : Colors.grey[400],
+                  )),
+              IconButton(
+                  onPressed: () => setState(() {
+                        _isGraphicModalSelected = true;
+                      }),
+                  icon: Icon(
+                    Icons.bar_chart,
+                    color: _isGraphicModalSelected
+                        ? Colors.red[300]
+                        : Colors.grey[400],
+                  ))
+            ],
+          ),
+          const Padding(
+            padding: EdgeInsets.only(left: 20, bottom: 4),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text('Anos', textAlign: TextAlign.left),
+            ),
+          ),
+          Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: MultiSelectChipField<Year?>(
+                  items: _items,
+                  title: const Text('Anos'),
+                  headerColor: Colors.red.withOpacity(0.5),
+                  showHeader: false,
+                  // height: 60,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey.shade400, width: 1.8),
+                  ),
+                  selectedChipColor: Colors.red.withOpacity(0.5),
+                  onTap: (results) {
+                    // print(results.elementAt(0)?.year);
+                    // _selectedYears = results;
+                  })),
+          Container(
+            padding: const EdgeInsets.only(top: 10, right: 20),
+            alignment: Alignment.centerRight,
+            child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red[300],
+                  // side: BorderSide(width: 8, color: Colors.yellow)
+                ),
+                onPressed: () => Navigator.pop(context),
+                child: const Text(
+                  'Concluido',
+                  style: TextStyle(color: Colors.white),
+                )),
+          )
+        ],
+      )),
     );
   }
 }
@@ -133,7 +228,13 @@ class _DrawerContentState extends State<DrawerContent> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: <Widget>[
-                Text('Notification'),
+                Row(children: <Widget>[
+                  Icon(
+                    Icons.notifications,
+                    color: Colors.grey.shade700,
+                  ),
+                  const Text('Notification'),
+                ]),
                 Switch(
                     value: _isToNotify,
                     onChanged: (isToNotify) {
@@ -146,7 +247,13 @@ class _DrawerContentState extends State<DrawerContent> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Light Mode'),
+                Row(children: <Widget>[
+                  Icon(
+                    Icons.dark_mode_rounded,
+                    color: Colors.grey.shade700,
+                  ),
+                  const Text('Dark mode'),
+                ]),
                 Switch(
                     value: _isLightMode,
                     onChanged: (isLightMode) {
@@ -162,6 +269,8 @@ class _DrawerContentState extends State<DrawerContent> {
 }
 
 class HomeBody extends StatelessWidget {
+  const HomeBody({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -174,17 +283,18 @@ class HomeBody extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Graphic(),
+            Container(child: const AlternatedAnualMensalButtons()),
+            LineGraphic(),
             Container(
-              margin: EdgeInsets.only(top: 30),
-              child: Column(
+              margin: const EdgeInsets.only(top: 30),
+              child: const Column(
                 children: <Widget>[
-                  const IncisoItem(label: 'Inciso I'),
-                  const IncisoItem(label: 'Inciso II'),
-                  const IncisoItem(label: 'Inciso III'),
-                  const IncisoItem(label: 'Inciso IV'),
-                  const IncisoItem(label: 'Inciso V'),
-                  const IncisoItem(label: 'Inciso VI'),
+                  IncisoItem(label: 'Inciso I'),
+                  IncisoItem(label: 'Inciso II'),
+                  IncisoItem(label: 'Inciso III'),
+                  IncisoItem(label: 'Inciso IV'),
+                  IncisoItem(label: 'Inciso V'),
+                  IncisoItem(label: 'Inciso VI'),
                 ],
               ),
             )
@@ -195,19 +305,59 @@ class HomeBody extends StatelessWidget {
   }
 }
 
-class PseudoScreen extends StatelessWidget {
-  final String label;
-
-  const PseudoScreen({super.key, required this.label});
+class AlternatedAnualMensalButtons extends StatefulWidget {
+  const AlternatedAnualMensalButtons({super.key});
 
   @override
+  State<AlternatedAnualMensalButtons> createState() =>
+      _AlternatedAnualMensalButtonsState();
+}
+
+class _AlternatedAnualMensalButtonsState
+    extends State<AlternatedAnualMensalButtons> {
+  bool _isMonthSelected = false;
+  @override
   Widget build(BuildContext context) {
-    return Card(
-        shadowColor: Colors.transparent,
-        margin: const EdgeInsets.all(8.0),
-        child: SizedBox.expand(
-          child: Center(child: Text(label)),
-        ));
+    return Row(children: [
+      TextButton(
+          onPressed: () {
+            setState(() {
+              _isMonthSelected = true;
+            });
+          },
+          child: Container(
+            decoration: BoxDecoration(
+                color: _isMonthSelected ? Colors.red[300] : Colors.transparent,
+                borderRadius: BorderRadius.circular(5)),
+            padding: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+            child: Text('Mensal',
+                style: TextStyle(
+                    color: _isMonthSelected ? Colors.white : Colors.black,
+                    decoration: !_isMonthSelected
+                        ? TextDecoration.underline
+                        : TextDecoration.none)),
+          )),
+      TextButton(
+          onPressed: () {
+            setState(() {
+              _isMonthSelected = false;
+            });
+          },
+          child: Container(
+            decoration: BoxDecoration(
+                color: !_isMonthSelected ? Colors.red[300] : Colors.transparent,
+                borderRadius: BorderRadius.circular(5)),
+            padding: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+            child: Text(
+              'Anual',
+              style: TextStyle(
+                  color: _isMonthSelected ? Colors.black : Colors.white,
+                  decoration: _isMonthSelected
+                      ? TextDecoration.underline
+                      : TextDecoration.none),
+            ),
+          ))
+    ]);
   }
 }
 
@@ -249,106 +399,131 @@ class CustomNavigationBar extends StatelessWidget {
               ),
               label: 'Favoritos')
         ],
-
         backgroundColor: Colors.deepOrange[50],
         indicatorColor: Color.fromARGB(255, 247, 102, 90),
-
-        // unselectedFontSize: 12,
-        // selectedFontSize: 12,
-        // selectedItemColor: Color.fromARGB(255, 247, 102, 90),
-        // selectedLabelStyle: TextStyle(fontWeight: FontWeight.w300),
-        // unselectedItemColor: Color.fromARGB(255, 193, 193, 193),
-        // elevation: 0,
-        // iconSize: 40,
-        // backgroundColor: Color.fromARGB(0, 255, 252, 252),
       ),
     );
   }
 }
 
-// class CustomNavigationBar extends StatelessWidget {
-//   @override
-//   Widget build(BuildContext context) {
-//     return Container(
-//       height: 80,
-//       decoration: BoxDecoration(
-//           border: Border(
-//               top: BorderSide(
-//                   color: Color.fromARGB(255, 247, 102, 90), width: 2))),
-//       child: BottomNavigationBar(
-//         items: const <BottomNavigationBarItem>[
-//           BottomNavigationBarItem(
-//               icon: Icon(
-//                 Icons.home,
-//               ),
-//               label: 'Home'),
-//           BottomNavigationBarItem(
-//               icon: Icon(
-//                 Icons.insert_drive_file,
-//               ),
-//               label: 'Documentos'),
-//           BottomNavigationBarItem(
-//               icon: Icon(
-//                 Icons.star,
-//               ),
-//               label: 'Favoritos')
-//         ],
-//         backgroundColor: Color.fromARGB(255, 255, 252, 252),
-//         unselectedFontSize: 12,
-//         selectedFontSize: 12,
-//         selectedItemColor: Color.fromARGB(255, 247, 102, 90),
-//         selectedLabelStyle: TextStyle(fontWeight: FontWeight.w300),
-//         unselectedItemColor: Color.fromARGB(255, 193, 193, 193),
-//         elevation: 0,
-//         iconSize: 40,
-//         // backgroundColor: Color.fromARGB(0, 255, 252, 252),
-//       ),
-//     );
-//   }
-// }
+class LineGraphic extends StatefulWidget {
+  const LineGraphic({super.key});
 
-class Graphic extends StatelessWidget {
-  List<FlSpot> points = List<FlSpot>.generate(12,
-      (int index) => FlSpot((index + 2018).toDouble(), (index + 1).toDouble()),
+  @override
+  State<LineGraphic> createState() => _LineGraphicState();
+}
+
+class _LineGraphicState extends State<LineGraphic> {
+  List<FlSpot> points = List<FlSpot>.generate(
+      12, (int index) => FlSpot(index.toDouble(), (index + 1).toDouble()),
       growable: false);
+
+  SideTitles get _monthsTitles => SideTitles(
+      showTitles: true,
+      getTitlesWidget: (value, meta) {
+        String text = '';
+        switch (value.toInt()) {
+          case 0:
+            text = 'Jan';
+            break;
+          // case 1:
+          //   text = 'Fev';
+          //   break;
+          case 2:
+            text = 'Mar';
+            break;
+          // case 3:
+          //   text = 'Abr';
+          //   break;
+          // case 4:
+          //   text = 'Mai';
+          //   break;
+          case 5:
+            text = 'Jun';
+            break;
+          // case 6:
+          //   text = 'Jul';
+          //   break;
+          // case 7:
+          //   text = 'Ago';
+          //   break;
+          case 8:
+            text = 'Set';
+            break;
+          // case 9:
+          //   text = 'Out';
+          //   break;
+          // case 10:
+          //   text = 'Nov';
+          //   break;
+          case 11:
+            text = 'Dez';
+            break;
+          case 12:
+            text = '';
+            break;
+        }
+        return Text(text);
+      });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(top: 24, right: 24),
-      child: AspectRatio(
-          aspectRatio: 3 / 4,
-          child: LineChart(LineChartData(
-              lineBarsData: [
-                LineChartBarData(
-                    spots: points,
-                    isCurved: false,
-                    dotData: FlDotData(show: true))
-              ],
-              borderData: FlBorderData(
-                  border:
-                      const Border(bottom: BorderSide(), left: BorderSide())),
-              gridData: const FlGridData(show: true),
-              titlesData: const FlTitlesData(
-                  rightTitles:
-                      AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  topTitles:
-                      AxisTitles(sideTitles: SideTitles(showTitles: false)))))),
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        // color: Colors.grey,
+        margin: const EdgeInsets.only(top: 24, ),
+        padding: const EdgeInsets.only(right: 25),
+        child: AspectRatio(
+            aspectRatio: 3/4,
+            child: LineChart(LineChartData(
+                lineBarsData: [
+                  LineChartBarData(
+                      spots: points,
+                      isCurved: false,
+                      dotData: const FlDotData(show: true))
+                ],
+                borderData: FlBorderData(
+                    border:
+                        const Border(bottom: BorderSide(), left: BorderSide())),
+                gridData: const FlGridData(show: true),
+                titlesData: FlTitlesData(
+                    bottomTitles: AxisTitles(sideTitles: _monthsTitles),
+                    rightTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false)),
+                    topTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false)))))),
+      ),
     );
   }
 }
 
-class IncisoItem extends StatelessWidget {
+class IncisoItem extends StatefulWidget {
   final String label;
-
   const IncisoItem({super.key, required this.label});
+
+  @override
+  State<IncisoItem> createState() => _IncisoItemState();
+}
+
+class _IncisoItemState extends State<IncisoItem> {
+  bool _isChecked = true;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       height: 30,
       child: Row(
-        children: [const Checkbox(value: true, onChanged: null), Text(label)],
+        children: [
+          Checkbox(
+              value: _isChecked,
+              onChanged: (isChecked) {
+                setState(() {
+                  _isChecked = isChecked!;
+                });
+              }),
+          Text(widget.label)
+        ],
       ),
     );
   }

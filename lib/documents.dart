@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:FinTracker/components/MonthExpansionItem.dart';
 
 class Documents extends StatelessWidget {
   final List<Map<String, dynamic>> months = <Map<String, dynamic>>[
@@ -21,86 +22,29 @@ class Documents extends StatelessWidget {
       (index) => Container(
             child: Text('My title is $index'),
           ));
-  int counter = -1;
+
+  Documents({super.key});
   @override
   Widget build(BuildContext context) {
     return ListView(
       children: [
-        CustomDropdownButton(),
+        const YearDropdownButton(),
         FilterButton(),
-        CustomListItem(month: 'Janeiro'),
-        CustomListItem(month: 'Fevereiro'),
-        CustomListItem(month: 'Março'),
-        CustomListItem(month: 'Abril'),
-        CustomListItem(month: 'Maio'),
-        CustomListItem(month: 'Junho'),
-        CustomListItem(month: 'Julho'),
-        CustomListItem(month: 'Agosto'),
-        CustomListItem(month: 'Setembro'),
-        CustomListItem(month: 'Outubro'),
-        CustomListItem(month: 'Novembro'),
-        CustomListItem(month: 'Dezembro'),
+        const MonthExpansionItem(month: 'Janeiro'),
+        const MonthExpansionItem(month: 'Fevereiro'),
+        const MonthExpansionItem(month: 'Março'),
+        const MonthExpansionItem(month: 'Abril'),
+        const MonthExpansionItem(month: 'Maio'),
+        const MonthExpansionItem(month: 'Junho'),
+        const MonthExpansionItem(month: 'Julho'),
+        const MonthExpansionItem(month: 'Agosto'),
+        const MonthExpansionItem(month: 'Setembro'),
+        const MonthExpansionItem(month: 'Outubro'),
+        const MonthExpansionItem(month: 'Novembro'),
+        const MonthExpansionItem(month: 'Dezembro'),
       ],
     );
   }
-}
-
-class CustomListItem extends StatelessWidget {
-  final String month;
-
-  const CustomListItem({super.key, required this.month});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(top: 10, right: 10, left: 10, bottom: 10),
-      elevation: 1,
-      child: ExpansionTile(
-        title: Text(month),
-        backgroundColor: Colors.red[400],
-        collapsedBackgroundColor: Colors.red[400],
-        textColor: Colors.white,
-        iconColor: Colors.white,
-        collapsedIconColor: Colors.white,
-        collapsedTextColor: Colors.white,
-        collapsedShape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        expandedAlignment: Alignment.centerLeft,
-        childrenPadding:
-            EdgeInsets.only(left: 20, top: 10, right: 20, bottom: 20),
-        children: <Widget>[
-          Container(
-            child:
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const Text(
-                'Orgão: TJSE',
-                style: TextStyle(color: Colors.white),
-              ),
-              const Text('Aut. Max: Ulysses ---',
-                  style: TextStyle(color: Colors.white)),
-              const Text('Responsável: Ulysses ---',
-                  style: TextStyle(color: Colors.white)),
-            ]),
-          )
-          // Text('Aut. Max: Ulysses ---'),
-          // Text('Responsável: Ulysses ---'),
-        ],
-        // trailing: Icon(Icons.keyboard_arrow_down),
-        // contentPadding: EdgeInsets.all(10),
-        // onTap: () {
-        //   print('Clicadooo');
-        // },
-      ),
-    );
-  }
-}
-
-class CustomDropdownButton extends StatefulWidget {
-  const CustomDropdownButton({super.key});
-
-  @override
-  State<CustomDropdownButton> createState() => _CustomDropdownButtonState();
 }
 
 const List<String> years = <String>[
@@ -114,8 +58,14 @@ const List<String> years = <String>[
 
 // Dropdown para esocolher os anos
 // Adicionar ações para os botões de foward e back!!!
+class YearDropdownButton extends StatefulWidget {
+  const YearDropdownButton({super.key});
 
-class _CustomDropdownButtonState extends State<CustomDropdownButton> {
+  @override
+  State<YearDropdownButton> createState() => _YearDropdownButtonState();
+}
+
+class _YearDropdownButtonState extends State<YearDropdownButton> {
   String dropdownValue = years.first;
 
   @override
@@ -125,13 +75,13 @@ class _CustomDropdownButtonState extends State<CustomDropdownButton> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          IconButton(onPressed: null, icon: Icon(Icons.arrow_back_ios)),
+          const IconButton(onPressed: null, icon: Icon(Icons.arrow_back_ios)),
           DropdownButton<String>(
               value: dropdownValue,
               elevation: 16,
               icon: Container(
                   margin: const EdgeInsets.only(left: 10),
-                  child: Icon(Icons.calendar_month)),
+                  child: const Icon(Icons.calendar_month)),
               onChanged: (String? value) {
                 setState(() {
                   dropdownValue = value!;
@@ -141,7 +91,8 @@ class _CustomDropdownButtonState extends State<CustomDropdownButton> {
                 return DropdownMenuItem<String>(
                     value: value, child: Text(value));
               }).toList()),
-          IconButton(onPressed: null, icon: Icon(Icons.arrow_forward_ios)),
+          const IconButton(
+              onPressed: null, icon: Icon(Icons.arrow_forward_ios)),
         ],
       ),
     );
@@ -162,7 +113,7 @@ class FilterButton extends StatelessWidget {
                   isScrollControlled: true,
                   context: context,
                   builder: (BuildContext context) {
-                    return ModalContent();
+                    return const FilterModal();
                   });
             },
             // style: ElevatedButton.styleFrom(
@@ -181,13 +132,13 @@ class FilterButton extends StatelessWidget {
   }
 }
 
-class ModalContent extends StatefulWidget {
-  const ModalContent({super.key});
+class FilterModal extends StatefulWidget {
+  const FilterModal({super.key});
   @override
-  State<ModalContent> createState() => _ModalContentState();
+  State<FilterModal> createState() => _FilterModalState();
 }
 
-class _ModalContentState extends State<ModalContent> {
+class _FilterModalState extends State<FilterModal> {
   final _siglaController = TextEditingController();
   final _orgaoController = TextEditingController();
   final _autMaxController = TextEditingController();
@@ -210,22 +161,22 @@ class _ModalContentState extends State<ModalContent> {
               const Text('Sigla'),
               TextField(
                 controller: _siglaController,
-                decoration: InputDecoration(border: OutlineInputBorder()),
+                decoration: const InputDecoration(border: OutlineInputBorder()),
               ),
               const Text('Nome do Orgão'),
               TextField(
                 controller: _orgaoController,
-                decoration: InputDecoration(border: OutlineInputBorder()),
+                decoration: const InputDecoration(border: OutlineInputBorder()),
               ),
               const Text('Autoridade Máxima'),
               TextField(
                 controller: _autMaxController,
-                decoration: InputDecoration(border: OutlineInputBorder()),
+                decoration: const InputDecoration(border: OutlineInputBorder()),
               ),
               const Text('Responsável pela informação'),
               TextField(
                 controller: _responsavelController,
-                decoration: InputDecoration(border: OutlineInputBorder()),
+                decoration: const InputDecoration(border: OutlineInputBorder()),
               ),
               Container(
                 alignment: Alignment.centerRight,
