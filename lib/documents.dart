@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:FinTracker/components/MonthExpansionItem.dart';
+import 'package:multi_select_flutter/multi_select_flutter.dart';
 
 class Documents extends StatelessWidget {
   final List<Map<String, dynamic>> months = <Map<String, dynamic>>[
@@ -27,21 +28,22 @@ class Documents extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      children: [
-        const YearDropdownButton(),
+      children: const <Widget>[
+        YearDropdownButton(),
+        MultSelectMonths(),
         FilterButton(),
-        const MonthExpansionItem(month: 'Janeiro'),
-        const MonthExpansionItem(month: 'Fevereiro'),
-        const MonthExpansionItem(month: 'Março'),
-        const MonthExpansionItem(month: 'Abril'),
-        const MonthExpansionItem(month: 'Maio'),
-        const MonthExpansionItem(month: 'Junho'),
-        const MonthExpansionItem(month: 'Julho'),
-        const MonthExpansionItem(month: 'Agosto'),
-        const MonthExpansionItem(month: 'Setembro'),
-        const MonthExpansionItem(month: 'Outubro'),
-        const MonthExpansionItem(month: 'Novembro'),
-        const MonthExpansionItem(month: 'Dezembro'),
+        MonthExpansionItem(month: 'Janeiro'),
+        MonthExpansionItem(month: 'Fevereiro'),
+        MonthExpansionItem(month: 'Março'),
+        MonthExpansionItem(month: 'Abril'),
+        MonthExpansionItem(month: 'Maio'),
+        MonthExpansionItem(month: 'Junho'),
+        MonthExpansionItem(month: 'Julho'),
+        MonthExpansionItem(month: 'Agosto'),
+        MonthExpansionItem(month: 'Setembro'),
+        MonthExpansionItem(month: 'Outubro'),
+        MonthExpansionItem(month: 'Novembro'),
+        MonthExpansionItem(month: 'Dezembro'),
       ],
     );
   }
@@ -99,8 +101,83 @@ class _YearDropdownButtonState extends State<YearDropdownButton> {
   }
 }
 
+class Month {
+  final int id;
+  final String name;
+  Month({required this.id, required this.name});
+}
+
+class MultSelectMonths extends StatefulWidget {
+  const MultSelectMonths({super.key});
+
+  @override
+  State<MultSelectMonths> createState() => _MultSelectMonthsState();
+}
+
+class _MultSelectMonthsState extends State<MultSelectMonths> {
+  static final List<Month> _months = [
+    Month(id: 0, name: 'Todos'),
+    Month(id: 1, name: 'Janeiro'),
+    Month(id: 2, name: 'Fevereiro'),
+    Month(id: 3, name: 'Março'),
+    Month(id: 4, name: 'Abril'),
+    Month(id: 5, name: 'Maio'),
+    Month(id: 6, name: 'Junho'),
+    Month(id: 7, name: 'Julho'),
+    Month(id: 8, name: 'Agosto'),
+    Month(id: 9, name: 'Setembro'),
+    Month(id: 10, name: 'Outubro'),
+    Month(id: 11, name: 'Novembro'),
+    Month(id: 12, name: 'Dezembro'),
+  ];
+
+  final _items =
+      _months.map((month) => MultiSelectItem(month, month.name)).toList();
+  final _multiSelectKey = GlobalKey<FormFieldState>();
+  List<Month?> _selectedMonths = _months;
+  @override
+  Widget build(BuildContext context) {
+    return MultiSelectChipField<Month?>(
+      key: _multiSelectKey,
+      items: _items,
+      onSaved: (values) {
+        print('onconfirmed');
+        print(values);
+      },
+      onTap: (values) {
+        setState(() => _selectedMonths = values);
+        // print(_selectedMonths.length);
+        // print(values.length);
+        // if(_selectedMonths.length != values.length) {
+        //   values.removeAt(0);
+        // }
+
+        // if (_selectedMonths.map((item) => item?.name).contains('Todos')) {
+        //   List<Month?> temp = _selectedMonths;
+        //   print(temp);
+        //   temp.removeAt(_selectedMonths.map((item) => item?.id).toList().indexOf(0));
+          
+        //   setState(() => _selectedMonths = temp);
+        //   values.clear();
+        //   values.addAll(_selectedMonths);
+        //   // setState(() {
+        //   //   _selectedMonths = values;
+        //   // });
+        //   print(values);
+        // }
+      },
+      selectedChipColor: Colors.red.withOpacity(0.5),
+      decoration: BoxDecoration(
+          border: Border.all(width: 1, color: Colors.transparent)),
+      showHeader: false,
+    );
+  }
+}
+
 // Botão de Filtrar e modal
 class FilterButton extends StatelessWidget {
+  const FilterButton({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Container(

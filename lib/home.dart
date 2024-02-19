@@ -25,7 +25,7 @@ class _HomeState extends State<Home> {
     setState(() {
       _currentPageIndex = index;
       pageController.animateToPage(index,
-          duration: Duration(milliseconds: 500), curve: Curves.ease);
+          duration: const Duration(milliseconds: 500), curve: Curves.ease);
     });
   }
 
@@ -51,7 +51,7 @@ class _HomeState extends State<Home> {
         onPageChanged: (index) {
           _updateCurrentPageIndex(index);
         },
-        children: <Widget>[HomeBody(), Documents(), Favorite()]);
+        children: <Widget>[const HomeBody(), Documents(), const Favorite()]);
   }
 
   @override
@@ -116,7 +116,7 @@ class ConfigGraphicModal extends StatefulWidget {
 
 class _ConfigGraphicModalState extends State<ConfigGraphicModal> {
   bool _isGraphicModalSelected = false;
-  static List<Year> _years = [
+  static final List<Year> _years = [
     Year(id: 2018, year: '2018'),
     Year(id: 2019, year: '2019'),
     Year(id: 2020, year: '2020'),
@@ -284,7 +284,7 @@ class HomeBody extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(child: const AlternatedAnualMensalButtons()),
-            LineGraphic(),
+            const LineGraphic(),
             Container(
               margin: const EdgeInsets.only(top: 30),
               child: const Column(
@@ -329,7 +329,7 @@ class _AlternatedAnualMensalButtonsState
             decoration: BoxDecoration(
                 color: _isMonthSelected ? Colors.red[300] : Colors.transparent,
                 borderRadius: BorderRadius.circular(5)),
-            padding: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
             child: Text('Mensal',
                 style: TextStyle(
                     color: _isMonthSelected ? Colors.white : Colors.black,
@@ -347,7 +347,7 @@ class _AlternatedAnualMensalButtonsState
             decoration: BoxDecoration(
                 color: !_isMonthSelected ? Colors.red[300] : Colors.transparent,
                 borderRadius: BorderRadius.circular(5)),
-            padding: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
             child: Text(
               'Anual',
               style: TextStyle(
@@ -373,7 +373,7 @@ class CustomNavigationBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       // height: 80,
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
           border: Border(
               top: BorderSide(
                   color: Color.fromARGB(255, 247, 102, 90), width: 1))),
@@ -400,7 +400,7 @@ class CustomNavigationBar extends StatelessWidget {
               label: 'Favoritos')
         ],
         backgroundColor: Colors.deepOrange[50],
-        indicatorColor: Color.fromARGB(255, 247, 102, 90),
+        indicatorColor: const Color.fromARGB(255, 247, 102, 90),
       ),
     );
   }
@@ -423,18 +423,18 @@ class _LineGraphicState extends State<LineGraphic> {
       getTitlesWidget: (value, meta) {
         String text = '';
         switch (value.toInt()) {
-          case 0:
-            text = 'Jan';
-            break;
-          // case 1:
-          //   text = 'Fev';
+          // case 0:
+          //   text = 'Jan';
           //   break;
-          case 2:
-            text = 'Mar';
+          case 1:
+            text = 'Fev';
             break;
-          // case 3:
-          //   text = 'Abr';
+          // case 2:
+          //   text = 'Mar';
           //   break;
+          case 3:
+            text = 'Abr';
+            break;
           // case 4:
           //   text = 'Mai';
           //   break;
@@ -444,15 +444,15 @@ class _LineGraphicState extends State<LineGraphic> {
           // case 6:
           //   text = 'Jul';
           //   break;
-          // case 7:
-          //   text = 'Ago';
-          //   break;
-          case 8:
-            text = 'Set';
+          case 7:
+            text = 'Ago';
             break;
-          // case 9:
-          //   text = 'Out';
+          // case 8:
+          //   text = 'Set';
           //   break;
+          case 9:
+            text = 'Out';
+            break;
           // case 10:
           //   text = 'Nov';
           //   break;
@@ -472,10 +472,12 @@ class _LineGraphicState extends State<LineGraphic> {
       alignment: Alignment.centerLeft,
       child: Container(
         // color: Colors.grey,
-        margin: const EdgeInsets.only(top: 24, ),
+        margin: const EdgeInsets.only(
+          top: 24,
+        ),
         padding: const EdgeInsets.only(right: 25),
         child: AspectRatio(
-            aspectRatio: 3/4,
+            aspectRatio: 3 / 4,
             child: LineChart(LineChartData(
                 lineBarsData: [
                   LineChartBarData(
@@ -488,6 +490,7 @@ class _LineGraphicState extends State<LineGraphic> {
                         const Border(bottom: BorderSide(), left: BorderSide())),
                 gridData: const FlGridData(show: true),
                 titlesData: FlTitlesData(
+                    // leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 40)),
                     bottomTitles: AxisTitles(sideTitles: _monthsTitles),
                     rightTitles: const AxisTitles(
                         sideTitles: SideTitles(showTitles: false)),
@@ -495,6 +498,77 @@ class _LineGraphicState extends State<LineGraphic> {
                         sideTitles: SideTitles(showTitles: false)))))),
       ),
     );
+  }
+}
+
+class BarGraphic extends StatefulWidget {
+  const BarGraphic({super.key});
+
+  @override
+  State<BarGraphic> createState() => _BarGraphicState();
+}
+
+class _BarGraphicState extends State<BarGraphic> {
+  List<FlSpot> points = List<FlSpot>.generate(
+      12, (int index) => FlSpot(index.toDouble(), (index + 1).toDouble()),
+      growable: false);
+
+  List<BarChartGroupData> _chartGroups() {
+    return points
+        .map((point) => BarChartGroupData(
+            x: point.x.toInt(), barRods: [BarChartRodData(toY: point.y)]))
+        .toList();
+  }
+
+  SideTitles get _bottomTitles => SideTitles(
+        showTitles: true,
+        getTitlesWidget: (value, meta) {
+          String text = '';
+          switch (value.toInt()) {
+            case 0:
+              text = 'Jan';
+              break;
+            case 2:
+              text = 'Mar';
+              break;
+            case 4:
+              text = 'May';
+              break;
+            case 6:
+              text = 'Jul';
+              break;
+            case 8:
+              text = 'Sep';
+              break;
+            case 10:
+              text = 'Nov';
+              break;
+          }
+
+          return Text(text);
+        },
+      );
+
+  @override
+  Widget build(BuildContext build) {
+    return AspectRatio(
+        aspectRatio: 3 / 4,
+        child: BarChart(BarChartData(
+          barGroups: _chartGroups(),
+          borderData: FlBorderData(
+              border: const Border(bottom: BorderSide(), left: BorderSide())),
+          gridData: const FlGridData(
+              show: false, drawVerticalLine: false, drawHorizontalLine: true),
+          titlesData: FlTitlesData(
+            bottomTitles: AxisTitles(sideTitles: _bottomTitles),
+            leftTitles:
+                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            topTitles:
+                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            rightTitles:
+                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          ),
+        )));
   }
 }
 
