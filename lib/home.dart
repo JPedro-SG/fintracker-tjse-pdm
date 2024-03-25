@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
+import 'package:provider/provider.dart';
 
 import 'package:FinTracker/documents.dart';
 import 'package:FinTracker/favorite.dart';
+import 'package:FinTracker/provider.dart';
+import 'package:FinTracker/components/BarGraphic.dart';
+import 'package:FinTracker/components/LineGraphic.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -14,6 +17,7 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   int _currentPageIndex = 0;
+  bool _isLineChartSelected = true;
 
   void _updateCurrentPageIndex(int index) {
     setState(() {
@@ -26,6 +30,12 @@ class _HomeState extends State<Home> {
       _currentPageIndex = index;
       pageController.animateToPage(index,
           duration: const Duration(milliseconds: 500), curve: Curves.ease);
+    });
+  }
+
+  void setIsLineChartSelected(value) {
+    setState(() {
+      _isLineChartSelected = value;
     });
   }
 
@@ -45,13 +55,65 @@ class _HomeState extends State<Home> {
     keepPage: true,
   );
 
+// Abaixo somente widgets
+
   Widget buildPageView() {
     return PageView(
         controller: pageController,
         onPageChanged: (index) {
           _updateCurrentPageIndex(index);
         },
-        children: <Widget>[const HomeBody(), Documents(), const Favorite()]);
+        children: <Widget>[
+          HomeBody(isLineChartSelected: _isLineChartSelected),
+          const Documents(),
+          const Favorite()
+        ]);
+  }
+
+  // botões leading do AppBar (Ou botão de menu)
+  Builder leadingBuilder() {
+    return Builder(builder: (BuildContext context) {
+      return IconButton(
+          onPressed: () => Scaffold.of(context).openDrawer(),
+          icon: Icon(
+            Icons.menu,
+            color: Colors.red[900],
+          ));
+    });
+  }
+
+  //botões de ação do AppBar
+  List<Widget>? actionsButton() {
+    if (_currentPageIndex == 0) {
+      return [
+        IconButton(
+            onPressed: () {
+              final myModel = Provider.of<FilesTJ>(context, listen: false);
+              showModalBottomSheet(
+                  context: context,
+                  builder: (_) {
+                    return ListenableProvider.value(
+                      value: myModel,
+                      child: ConfigGraphicModal(
+                        onSelectGraphic: setIsLineChartSelected,
+                        isLineG: _isLineChartSelected,
+                      ),
+                    );
+                  });
+            },
+            icon: Icon(
+              Icons.settings,
+              color: Colors.red.shade900,
+            ))
+      ];
+    }
+
+    return [];
+  }
+
+  @override
+  void initState() {
+    super.initState();
   }
 
   @override
@@ -59,15 +121,7 @@ class _HomeState extends State<Home> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
-        // automaticallyImplyLeading: false,
-        leading: Builder(builder: (BuildContext context) {
-          return IconButton(
-              onPressed: () => Scaffold.of(context).openDrawer(),
-              icon: Icon(
-                Icons.menu,
-                color: Colors.red[900],
-              ));
-        }),
+        leading: leadingBuilder(),
         centerTitle: true,
         title: Text(
           updateAppBarTitle(),
@@ -75,21 +129,7 @@ class _HomeState extends State<Home> {
             color: Colors.red[900],
           ),
         ),
-        actions: [
-          if (_currentPageIndex == 0)
-            IconButton(
-                onPressed: () {
-                  showModalBottomSheet(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return const ConfigGraphicModal();
-                      });
-                },
-                icon: Icon(
-                  Icons.settings,
-                  color: Colors.red.shade900,
-                ))
-        ],
+        actions: actionsButton(),
       ),
       body: buildPageView(),
       drawer: const Drawer(child: DrawerContent()),
@@ -101,21 +141,20 @@ class _HomeState extends State<Home> {
   }
 }
 
-class Year {
-  final int id;
-  final String year;
-  Year({required this.id, required this.year});
-}
-
+// Modal de configuração do gráfico
 class ConfigGraphicModal extends StatefulWidget {
-  const ConfigGraphicModal({super.key});
+  Function onSelectGraphic;
+  final bool isLineG;
+  ConfigGraphicModal(
+      {super.key, required this.onSelectGraphic, required this.isLineG});
 
   @override
   State<ConfigGraphicModal> createState() => _ConfigGraphicModalState();
 }
 
 class _ConfigGraphicModalState extends State<ConfigGraphicModal> {
-  bool _isGraphicModalSelected = false;
+  bool _isBarChartSelected = false;
+
   static final List<Year> _years = [
     Year(id: 2018, year: '2018'),
     Year(id: 2019, year: '2019'),
@@ -127,7 +166,13 @@ class _ConfigGraphicModalState extends State<ConfigGraphicModal> {
 
   final _items =
       _years.map((year) => MultiSelectItem(year, year.year)).toList();
-  List<Year> _selectedYears = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _isBarChartSelected = !widget.isLineG;
+  }
+
   @override
   Widget build(BuildContext context) {
     return SizedBox(
@@ -145,21 +190,23 @@ class _ConfigGraphicModalState extends State<ConfigGraphicModal> {
               ),
               IconButton(
                   onPressed: () => setState(() {
-                        _isGraphicModalSelected = false;
+                        _isBarChartSelected = false;
+                        widget.onSelectGraphic(true);
                       }),
                   icon: Icon(
                     Icons.line_axis,
-                    color: !_isGraphicModalSelected
+                    color: !_isBarChartSelected
                         ? Colors.red[300]
                         : Colors.grey[400],
                   )),
               IconButton(
                   onPressed: () => setState(() {
-                        _isGraphicModalSelected = true;
+                        _isBarChartSelected = true;
+                        widget.onSelectGraphic(false);
                       }),
                   icon: Icon(
                     Icons.bar_chart,
-                    color: _isGraphicModalSelected
+                    color: _isBarChartSelected
                         ? Colors.red[300]
                         : Colors.grey[400],
                   ))
@@ -176,17 +223,31 @@ class _ConfigGraphicModalState extends State<ConfigGraphicModal> {
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: MultiSelectChipField<Year?>(
                   items: _items,
+                  initialValue: (context.watch<FilesTJ>().yearsList.isNotEmpty &&
+                          context.watch<FilesTJ>().yearsList[0]?.id == -2022)
+                      ? [_years[4]]
+                      : context.watch<FilesTJ>().yearsList,
                   title: const Text('Anos'),
                   headerColor: Colors.red.withOpacity(0.5),
                   showHeader: false,
+
                   // height: 60,
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.grey.shade400, width: 1.8),
                   ),
                   selectedChipColor: Colors.red.withOpacity(0.5),
                   onTap: (results) {
-                    // print(results.elementAt(0)?.year);
-                    // _selectedYears = results;
+
+                    if (_isBarChartSelected) {
+                      while(results.length >= 3) {
+                        results.removeAt(0);
+                      }
+                    }
+
+                    Provider.of<FilesTJ>(context, listen: false)
+                        .setYearsList(results);
+
+                    // context.read<FilesTJ>()._setYearsList(results);
                   })),
           Container(
             padding: const EdgeInsets.only(top: 10, right: 20),
@@ -208,6 +269,7 @@ class _ConfigGraphicModalState extends State<ConfigGraphicModal> {
   }
 }
 
+// Conteudo do Drawer (Menu lateral)
 class DrawerContent extends StatefulWidget {
   const DrawerContent({super.key});
 
@@ -268,8 +330,10 @@ class _DrawerContentState extends State<DrawerContent> {
   }
 }
 
+// Conteudo Principal da pagina
 class HomeBody extends StatelessWidget {
-  const HomeBody({super.key});
+  final bool isLineChartSelected;
+  const HomeBody({super.key, required this.isLineChartSelected});
 
   @override
   Widget build(BuildContext context) {
@@ -284,17 +348,17 @@ class HomeBody extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(child: const AlternatedAnualMensalButtons()),
-            const LineGraphic(),
+            (isLineChartSelected) ? const LineGraphic() : const BarGraphic(),
             Container(
               margin: const EdgeInsets.only(top: 30),
               child: const Column(
                 children: <Widget>[
-                  IncisoItem(label: 'Inciso I'),
-                  IncisoItem(label: 'Inciso II'),
-                  IncisoItem(label: 'Inciso III'),
-                  IncisoItem(label: 'Inciso IV'),
-                  IncisoItem(label: 'Inciso V'),
-                  IncisoItem(label: 'Inciso VI'),
+                  IncisoItem(label: 'Inciso I', value: 'incisoi'),
+                  IncisoItem(label: 'Inciso II', value: 'incisoii'),
+                  IncisoItem(label: 'Inciso III', value: 'incisoiii'),
+                  IncisoItem(label: 'Inciso IV', value: 'incisoiv'),
+                  IncisoItem(label: 'Inciso V', value: 'incisov'),
+                  IncisoItem(label: 'Inciso VI', value: 'incisovi'),
                 ],
               ),
             )
@@ -305,6 +369,7 @@ class HomeBody extends StatelessWidget {
   }
 }
 
+// Botões de Anual e Mensal
 class AlternatedAnualMensalButtons extends StatefulWidget {
   const AlternatedAnualMensalButtons({super.key});
 
@@ -323,6 +388,8 @@ class _AlternatedAnualMensalButtonsState
           onPressed: () {
             setState(() {
               _isMonthSelected = true;
+              Provider.of<FilesTJ>(context, listen: false).setMonthView(true);
+              // context.read<FilesTJ>().setMonthView(true);
             });
           },
           child: Container(
@@ -341,6 +408,8 @@ class _AlternatedAnualMensalButtonsState
           onPressed: () {
             setState(() {
               _isMonthSelected = false;
+              Provider.of<FilesTJ>(context, listen: false).setMonthView(false);
+              // context.read<FilesTJ>()._setMonthView(false);
             });
           },
           child: Container(
@@ -361,6 +430,7 @@ class _AlternatedAnualMensalButtonsState
   }
 }
 
+// Versão modificada da Barra de navegação
 class CustomNavigationBar extends StatelessWidget {
   final int currentPageIndex;
   final Function(int) updateCurrentPageIndex;
@@ -406,175 +476,11 @@ class CustomNavigationBar extends StatelessWidget {
   }
 }
 
-class LineGraphic extends StatefulWidget {
-  const LineGraphic({super.key});
-
-  @override
-  State<LineGraphic> createState() => _LineGraphicState();
-}
-
-class _LineGraphicState extends State<LineGraphic> {
-  List<FlSpot> points = List<FlSpot>.generate(
-      12, (int index) => FlSpot(index.toDouble(), (index + 1).toDouble()),
-      growable: false);
-
-  SideTitles get _monthsTitles => SideTitles(
-      showTitles: true,
-      getTitlesWidget: (value, meta) {
-        String text = '';
-        switch (value.toInt()) {
-          // case 0:
-          //   text = 'Jan';
-          //   break;
-          case 1:
-            text = 'Fev';
-            break;
-          // case 2:
-          //   text = 'Mar';
-          //   break;
-          case 3:
-            text = 'Abr';
-            break;
-          // case 4:
-          //   text = 'Mai';
-          //   break;
-          case 5:
-            text = 'Jun';
-            break;
-          // case 6:
-          //   text = 'Jul';
-          //   break;
-          case 7:
-            text = 'Ago';
-            break;
-          // case 8:
-          //   text = 'Set';
-          //   break;
-          case 9:
-            text = 'Out';
-            break;
-          // case 10:
-          //   text = 'Nov';
-          //   break;
-          case 11:
-            text = 'Dez';
-            break;
-          case 12:
-            text = '';
-            break;
-        }
-        return Text(text);
-      });
-
-  @override
-  Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Container(
-        // color: Colors.grey,
-        margin: const EdgeInsets.only(
-          top: 24,
-        ),
-        padding: const EdgeInsets.only(right: 25),
-        child: AspectRatio(
-            aspectRatio: 3 / 4,
-            child: LineChart(LineChartData(
-                lineBarsData: [
-                  LineChartBarData(
-                      spots: points,
-                      isCurved: false,
-                      dotData: const FlDotData(show: true))
-                ],
-                borderData: FlBorderData(
-                    border:
-                        const Border(bottom: BorderSide(), left: BorderSide())),
-                gridData: const FlGridData(show: true),
-                titlesData: FlTitlesData(
-                    // leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 40)),
-                    bottomTitles: AxisTitles(sideTitles: _monthsTitles),
-                    rightTitles: const AxisTitles(
-                        sideTitles: SideTitles(showTitles: false)),
-                    topTitles: const AxisTitles(
-                        sideTitles: SideTitles(showTitles: false)))))),
-      ),
-    );
-  }
-}
-
-class BarGraphic extends StatefulWidget {
-  const BarGraphic({super.key});
-
-  @override
-  State<BarGraphic> createState() => _BarGraphicState();
-}
-
-class _BarGraphicState extends State<BarGraphic> {
-  List<FlSpot> points = List<FlSpot>.generate(
-      12, (int index) => FlSpot(index.toDouble(), (index + 1).toDouble()),
-      growable: false);
-
-  List<BarChartGroupData> _chartGroups() {
-    return points
-        .map((point) => BarChartGroupData(
-            x: point.x.toInt(), barRods: [BarChartRodData(toY: point.y)]))
-        .toList();
-  }
-
-  SideTitles get _bottomTitles => SideTitles(
-        showTitles: true,
-        getTitlesWidget: (value, meta) {
-          String text = '';
-          switch (value.toInt()) {
-            case 0:
-              text = 'Jan';
-              break;
-            case 2:
-              text = 'Mar';
-              break;
-            case 4:
-              text = 'May';
-              break;
-            case 6:
-              text = 'Jul';
-              break;
-            case 8:
-              text = 'Sep';
-              break;
-            case 10:
-              text = 'Nov';
-              break;
-          }
-
-          return Text(text);
-        },
-      );
-
-  @override
-  Widget build(BuildContext build) {
-    return AspectRatio(
-        aspectRatio: 3 / 4,
-        child: BarChart(BarChartData(
-          barGroups: _chartGroups(),
-          borderData: FlBorderData(
-              border: const Border(bottom: BorderSide(), left: BorderSide())),
-          gridData: const FlGridData(
-              show: false, drawVerticalLine: false, drawHorizontalLine: true),
-          titlesData: FlTitlesData(
-            bottomTitles: AxisTitles(sideTitles: _bottomTitles),
-            leftTitles:
-                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            topTitles:
-                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            rightTitles:
-                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          ),
-        )));
-  }
-}
-
+// Incisos (Checkbox)
 class IncisoItem extends StatefulWidget {
   final String label;
-  const IncisoItem({super.key, required this.label});
+  final String value;
+  const IncisoItem({super.key, required this.label, required this.value});
 
   @override
   State<IncisoItem> createState() => _IncisoItemState();
@@ -595,6 +501,11 @@ class _IncisoItemState extends State<IncisoItem> {
                 setState(() {
                   _isChecked = isChecked!;
                 });
+                if (isChecked == true) {
+                  context.read<FilesTJ>().addInc(widget.value);
+                } else {
+                  context.read<FilesTJ>().removeInc(widget.value);
+                }
               }),
           Text(widget.label)
         ],

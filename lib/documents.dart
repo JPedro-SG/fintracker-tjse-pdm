@@ -1,67 +1,176 @@
 import 'package:flutter/material.dart';
-import 'package:FinTracker/components/MonthExpansionItem.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
+import 'package:postgres/postgres.dart';
+import 'package:provider/provider.dart';
 
-class Documents extends StatelessWidget {
-  final List<Map<String, dynamic>> months = <Map<String, dynamic>>[
-    {'month': 'Janeiro'},
-    {'month': 'Fevereiro'},
-    {'month': 'Março'},
-    {'month': 'Abril'},
-    {'month': 'Maio'},
-    {'month': 'Junho'},
-    {'month': 'Julho'},
-    {'month': 'Agosto'},
-    {'month': 'Setembro'},
-    {'month': 'Outubro'},
-    {'month': 'Novembro'},
-    {'month': 'Dezembro'}
-  ];
+import 'package:FinTracker/components/MonthExpansionItem.dart';
+import 'package:FinTracker/provider.dart';
 
-  final List<Widget> item = List.generate(
-      12,
-      (index) => Container(
-            child: Text('My title is $index'),
-          ));
+List<String> years = <String>['2018', '2019', '2020', '2021', '2022', '2023'];
+List<Month> months = [
+  Month(id: 1, name: 'Janeiro'),
+  Month(id: 2, name: 'Fevereiro'),
+  Month(id: 3, name: 'Março'),
+  Month(id: 4, name: 'Abril'),
+  Month(id: 5, name: 'Maio'),
+  Month(id: 6, name: 'Junho'),
+  Month(id: 7, name: 'Julho'),
+  Month(id: 8, name: 'Agosto'),
+  Month(id: 9, name: 'Setembro'),
+  Month(id: 10, name: 'Outubro'),
+  Month(id: 11, name: 'Novembro'),
+  Month(id: 12, name: 'Dezembro'),
+];
 
-  Documents({super.key});
+class Documents extends StatefulWidget {
+  const Documents({super.key});
+
+  @override
+  State<Documents> createState() => _DocumentsState();
+}
+
+class _DocumentsState extends State<Documents> {
+  List<Map<String, dynamic>> _documents = [];
+  List<Month?> _selectedMonths = [];
+  String _selectedYear = years.first;
+
+  @override
+  void initState() {
+    super.initState();
+    // _fetchDocuments();
+    _selectedMonths = months;
+  }
+
+  void setSelectedYear(String value) {
+    setState(() {
+      _selectedYear = value;
+    });
+  }
+
+  void setSelectedMonths(List<Month?> value) {
+    setState(() => _selectedMonths = value);
+  }
+
+  String converteMonthNumberToMonthStr(int monthNumber) {
+    switch (monthNumber) {
+      case 1:
+        return 'Janeiro';
+      case 2:
+        return 'Fevereiro';
+      case 3:
+        return 'Março';
+      case 4:
+        return 'Abril';
+      case 5:
+        return 'Maio';
+      case 6:
+        return 'Junho';
+      case 7:
+        return 'Julho';
+      case 8:
+        return 'Agosto';
+      case 9:
+        return 'Setembro';
+      case 10:
+        return 'Outubro';
+      case 11:
+        return 'Novembro';
+      case 12:
+        return 'Dezembro';
+      default:
+        return 'error';
+    }
+  }
+
+  List<Map<String, dynamic>> mapDocuments(List<List<dynamic>> results) {
+    return results.map((row) {
+      DateTime date = row[4];
+      return {
+        'sigla': row[0],
+        'orgao': row[1],
+        'autoridade': row[2],
+        'responsavel': row[3],
+        'data': date,
+        'inicisoi': (row[5]),
+        'inicisoii': (row[6]),
+        'inicisoiii': (row[7]),
+        'inicisoiv': (row[8]),
+        'inicisov': (row[9]),
+        'inicisovi': (row[10]),
+        'mes': converteMonthNumberToMonthStr(date.month)
+      };
+    }).toList();
+  }
+
+  Future<void> _fetchDocuments() async {
+    try {
+      Connection conn = await Connection.open(
+          Endpoint(
+              port: 5432,
+              host: '10.0.2.2',
+              database: 'fintracker-db',
+              username: 'postgres',
+              password: 'dgcs9922'),
+          settings: const ConnectionSettings(sslMode: SslMode.disable));
+
+      final results = await conn.execute('SELECT * FROM tb_documento;');
+
+      // print(mapDocuments(results));
+      setState(() {
+        _documents = mapDocuments(results);
+      });
+      conn.close();
+    } catch (e) {
+      // print('requisição not ok');
+      print('Error: ${e.toString()}');
+      throw Exception('Something went wrong in db connection');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    List<Map<String, dynamic>> documentsByYear = context
+        .read<FilesTJ>()
+        .documents
+        .where((element) => element['data']?.year == int.parse(_selectedYear))
+        .toList();
+
+    List<int?> filteredMonths =
+        _selectedMonths.map((element) => element?.id).toList();
+
+    print(filteredMonths);
+    List<Map<String, dynamic>> documentsFiltered = documentsByYear
+        .where((element) => filteredMonths.contains(element['data'].month))
+        .toList();
+
+    documentsFiltered.sort((a, b) => a['data'].compareTo(b['data']));
+    //  print(documentsFiltered);
+
+    List<Widget> WidgetList = List.generate(
+        documentsFiltered.length,
+        (index) => MonthExpansionItem(
+              month: documentsFiltered[index]['mes'],
+              autority: documentsFiltered[index]['autoridade'],
+              org: documentsFiltered[index]['orgao'],
+              responsible: documentsFiltered[index]['responsavel'],
+              id: documentsFiltered[index]['id'],
+            )).toList();
     return ListView(
-      children: const <Widget>[
-        YearDropdownButton(),
-        MultSelectMonths(),
-        FilterButton(),
-        MonthExpansionItem(month: 'Janeiro'),
-        MonthExpansionItem(month: 'Fevereiro'),
-        MonthExpansionItem(month: 'Março'),
-        MonthExpansionItem(month: 'Abril'),
-        MonthExpansionItem(month: 'Maio'),
-        MonthExpansionItem(month: 'Junho'),
-        MonthExpansionItem(month: 'Julho'),
-        MonthExpansionItem(month: 'Agosto'),
-        MonthExpansionItem(month: 'Setembro'),
-        MonthExpansionItem(month: 'Outubro'),
-        MonthExpansionItem(month: 'Novembro'),
-        MonthExpansionItem(month: 'Dezembro'),
+      children: <Widget>[
+        YearDropdownButton(onSelectYear: setSelectedYear),
+        MultSelectMonths(onSelectMonths: setSelectedMonths),
+        const FilterButton(),
+        ...WidgetList,
       ],
     );
   }
 }
 
-const List<String> years = <String>[
-  '2018',
-  '2019',
-  '2020',
-  '2021',
-  '2022',
-  '2023'
-];
-
 // Dropdown para esocolher os anos
 // Adicionar ações para os botões de foward e back!!!
 class YearDropdownButton extends StatefulWidget {
-  const YearDropdownButton({super.key});
+  final Function onSelectYear;
+  const YearDropdownButton({super.key, required this.onSelectYear});
 
   @override
   State<YearDropdownButton> createState() => _YearDropdownButtonState();
@@ -70,6 +179,22 @@ class YearDropdownButton extends StatefulWidget {
 class _YearDropdownButtonState extends State<YearDropdownButton> {
   String dropdownValue = years.first;
 
+  void setDropdownValueByArrows(String direction) {
+    int index = years.indexWhere((element) => element == dropdownValue);
+    if (direction.toLowerCase() == 'right') {
+      index++;
+      if (index >= years.length) return;
+    } else {
+      index--;
+      if (index < 0) return;
+    }
+
+    setState(() {
+      dropdownValue = years[index];
+    });
+    widget.onSelectYear(years[index]);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Align(
@@ -77,7 +202,12 @@ class _YearDropdownButtonState extends State<YearDropdownButton> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const IconButton(onPressed: null, icon: Icon(Icons.arrow_back_ios)),
+          IconButton(
+              onPressed: () => setDropdownValueByArrows('left'),
+              icon: Icon(
+                Icons.arrow_back_ios,
+                color: Colors.grey[800],
+              )),
           DropdownButton<String>(
               value: dropdownValue,
               elevation: 16,
@@ -88,13 +218,18 @@ class _YearDropdownButtonState extends State<YearDropdownButton> {
                 setState(() {
                   dropdownValue = value!;
                 });
+                widget.onSelectYear(dropdownValue);
               },
               items: years.map<DropdownMenuItem<String>>((String value) {
                 return DropdownMenuItem<String>(
                     value: value, child: Text(value));
               }).toList()),
-          const IconButton(
-              onPressed: null, icon: Icon(Icons.arrow_forward_ios)),
+          IconButton(
+              onPressed: () => setDropdownValueByArrows('right'),
+              icon: Icon(
+                Icons.arrow_forward_ios,
+                color: Colors.grey[800],
+              )),
         ],
       ),
     );
@@ -108,63 +243,36 @@ class Month {
 }
 
 class MultSelectMonths extends StatefulWidget {
-  const MultSelectMonths({super.key});
+  final Function onSelectMonths;
+  const MultSelectMonths({super.key, required this.onSelectMonths});
 
   @override
   State<MultSelectMonths> createState() => _MultSelectMonthsState();
 }
 
 class _MultSelectMonthsState extends State<MultSelectMonths> {
-  static final List<Month> _months = [
-    Month(id: 0, name: 'Todos'),
-    Month(id: 1, name: 'Janeiro'),
-    Month(id: 2, name: 'Fevereiro'),
-    Month(id: 3, name: 'Março'),
-    Month(id: 4, name: 'Abril'),
-    Month(id: 5, name: 'Maio'),
-    Month(id: 6, name: 'Junho'),
-    Month(id: 7, name: 'Julho'),
-    Month(id: 8, name: 'Agosto'),
-    Month(id: 9, name: 'Setembro'),
-    Month(id: 10, name: 'Outubro'),
-    Month(id: 11, name: 'Novembro'),
-    Month(id: 12, name: 'Dezembro'),
-  ];
+  final isFirstTimeRendered = true;
 
   final _items =
-      _months.map((month) => MultiSelectItem(month, month.name)).toList();
+      months.map((month) => MultiSelectItem(month, month.name)).toList();
   final _multiSelectKey = GlobalKey<FormFieldState>();
-  List<Month?> _selectedMonths = _months;
+  // List<Month?> _selectedMonths = months;
+
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   widget.onSelectMonths(months);
+  // }
+
   @override
   Widget build(BuildContext context) {
     return MultiSelectChipField<Month?>(
       key: _multiSelectKey,
       items: _items,
-      onSaved: (values) {
-        print('onconfirmed');
-        print(values);
-      },
+      initialValue: months,
       onTap: (values) {
-        setState(() => _selectedMonths = values);
-        // print(_selectedMonths.length);
-        // print(values.length);
-        // if(_selectedMonths.length != values.length) {
-        //   values.removeAt(0);
-        // }
-
-        // if (_selectedMonths.map((item) => item?.name).contains('Todos')) {
-        //   List<Month?> temp = _selectedMonths;
-        //   print(temp);
-        //   temp.removeAt(_selectedMonths.map((item) => item?.id).toList().indexOf(0));
-          
-        //   setState(() => _selectedMonths = temp);
-        //   values.clear();
-        //   values.addAll(_selectedMonths);
-        //   // setState(() {
-        //   //   _selectedMonths = values;
-        //   // });
-        //   print(values);
-        // }
+        // print(values);
+        widget.onSelectMonths(values);
       },
       selectedChipColor: Colors.red.withOpacity(0.5),
       decoration: BoxDecoration(

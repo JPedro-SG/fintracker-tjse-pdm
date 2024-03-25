@@ -2,13 +2,29 @@ import 'package:flutter/material.dart';
 
 class MonthExpansionItem extends StatefulWidget {
   final String month;
-  const MonthExpansionItem({super.key, required this.month});
+  final String org;
+  final String autority;
+  final String responsible;
+  final String id;
+  const MonthExpansionItem({
+    super.key,
+    required this.month,
+    required this.org,
+    required this.autority,
+    required this.responsible,
+    required this.id,
+  });
 
   @override
   State<MonthExpansionItem> createState() => _MonthExpansionItemState();
 }
 
 class _MonthExpansionItemState extends State<MonthExpansionItem> {
+  @override
+  void initState() {
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -30,14 +46,13 @@ class _MonthExpansionItemState extends State<MonthExpansionItem> {
             const EdgeInsets.only(left: 20, top: 10, right: 20, bottom: 5),
         children: <Widget>[
           Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            const Text(
-              'Orgão: TJSE',
-              style: TextStyle(color: Colors.white),
+            Text(
+              widget.org,
+              style: const TextStyle(color: Colors.white),
             ),
-            const Text('Aut. Max: Ulysses ---',
-                style: TextStyle(color: Colors.white)),
-            const Text('Responsável: Ulysses ---',
-                style: TextStyle(color: Colors.white)),
+            Text(widget.autority, style: const TextStyle(color: Colors.white)),
+            Text(widget.responsible,
+                style: const TextStyle(color: Colors.white)),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
