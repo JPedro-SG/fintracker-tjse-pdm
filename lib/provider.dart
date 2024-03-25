@@ -74,7 +74,7 @@ class FilesTJ with ChangeNotifier {
               host: '10.0.2.2',
               database: 'fintracker-db',
               username: 'postgres',
-              password: 'dgcs9922'),
+              password: 'password'),
           settings: const ConnectionSettings(sslMode: SslMode.disable));
 
       final results = await conn.execute('SELECT * FROM tb_documento;');
